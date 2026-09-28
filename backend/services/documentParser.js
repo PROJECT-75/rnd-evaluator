@@ -7,7 +7,22 @@
 
 const path = require('path');
 const mammoth = require('mammoth');
-const { PDFParse } = require('pdf-parse');
+
+// pdf-parse is loaded lazily (only when a PDF is uploaded). It depends on a native
+// graphics module; if that ever fails to load on a host, only PDF uploads are affected —
+// the rest of the API (health, evaluate, compare, DOCX/TXT uploads) keeps working.
+let PDFParse;
+function loadPdfParse() {
+  if (!PDFParse) {
+    try {
+      ({ PDFParse } = require('pdf-parse'));
+    } catch (err) {
+      console.error('[pdf] pdf-parse failed to load:', err.message);
+      throw new Error('PDF reading is unavailable on this server right now — please upload a DOCX or TXT file, or paste the text.');
+    }
+  }
+  return PDFParse;
+}
 
 const SUPPORTED = ['.pdf', '.docx', '.txt'];
 
@@ -21,7 +36,8 @@ async function parseDocument(buffer, originalName) {
   let text = '';
 
   if (ext === '.pdf') {
-    const parser = new PDFParse({ data: buffer });
+    const Parser = loadPdfParse();
+    const parser = new Parser({ data: buffer });
     try {
       const result = await parser.getText();
       text = result.text || '';

@@ -7,10 +7,13 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
-      "includeFiles": "node_modules/better-sqlite3/**"
+      "includeFiles": "{node_modules/better-sqlite3/**,node_modules/@napi-rs/**,node_modules/pdf-parse/dist/**}"
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
   ]
 }
