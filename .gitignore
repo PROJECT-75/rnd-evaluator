@@ -17,3 +17,6 @@ backend/db/*.db-*
 Thumbs.db
 .vscode/
 *.log
+
+# Vercel local build output
+.vercel/

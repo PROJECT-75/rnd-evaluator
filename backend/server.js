@@ -1,35 +1,21 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+/**
+ * server.js — runs the app as a normal long-lived server (local dev and Render).
+ * Serves the built React app from frontend/dist alongside the API.
+ */
 const path = require('path');
+const express = require('express');
+const app = require('./app');
 
-const evaluateRoute = require('./routes/evaluate');
-const proposalsRoute = require('./routes/proposals');
-const extractRoute = require('./routes/extract');
-
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json({ limit: '2mb' })); // proposals can be long documents
-
-// Health check (used by the hosting platform to know the app is up)
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, ai: Boolean(process.env.GEMINI_API_KEY) });
-});
-
-// API routes
-app.use('/api', evaluateRoute);
-app.use('/api', proposalsRoute);
-app.use('/api', extractRoute);
-
-// Serve the built React frontend (after `npm run build` in /frontend)
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendDist));
 
-// Catch-all: send index.html for any non-API route
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendDist, 'index.html'));
+// Any non-API route → the React app
+app.get(/^(?!\/api\/).*/, (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'), (err) => {
+    if (err) res.status(404).send('Frontend not built yet — run "npm run build", or use the Vite dev server on :5173.');
+  });
 });
 
 app.listen(PORT, () => {

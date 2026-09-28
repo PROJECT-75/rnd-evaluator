@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/db');
+const store = require('../db/store');
 const REFERENCE = require('../db/pastProposalsReference');
 
 // GET /api/reference - the reference projects novelty is judged against (shown in the UI)
@@ -14,7 +14,7 @@ router.get('/reference', (req, res) => {
 // GET /api/proposals - list all evaluated proposals, newest first
 router.get('/proposals', (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM proposals ORDER BY created_at DESC').all();
+    const rows = store.all();
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -24,7 +24,7 @@ router.get('/proposals', (req, res) => {
 // GET /api/proposals/:id - single proposal detail
 router.get('/proposals/:id', (req, res) => {
   try {
-    const row = db.prepare('SELECT * FROM proposals WHERE id = ?').get(req.params.id);
+    const row = store.get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Proposal not found' });
     res.json(row);
   } catch (err) {
@@ -35,7 +35,7 @@ router.get('/proposals/:id', (req, res) => {
 // DELETE /api/proposals/:id - remove a proposal (useful for cleaning up demo data)
 router.delete('/proposals/:id', (req, res) => {
   try {
-    db.prepare('DELETE FROM proposals WHERE id = ?').run(req.params.id);
+    store.remove(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

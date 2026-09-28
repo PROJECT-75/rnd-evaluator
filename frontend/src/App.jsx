@@ -36,9 +36,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [count, setCount] = useState(null);
+  const [maxUploadMb, setMaxUploadMb] = useState(4);
   const resultRef = useRef(null);
 
   useEffect(() => {
+    fetch('/api/health').then((r) => r.json()).then((h) => h?.maxUploadMb && setMaxUploadMb(h.maxUploadMb)).catch(() => {});
     fetch('/api/proposals').then((r) => r.json()).then((d) => Array.isArray(d) && setCount(d.length)).catch(() => {});
   }, []);
 
@@ -54,7 +56,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: `Server error (HTTP ${res.status}). Please try again.` }));
       if (!res.ok) throw new Error(data.error || 'Evaluation failed');
       setResult(data);
       setResultProposer(payload.proposer);
@@ -120,7 +122,7 @@ export default function App() {
         {tab === 'evaluate' && (
           <div className="grid gap-6 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <UploadForm form={form} setForm={setForm} onSubmit={handleEvaluate} onClear={clearAll} loading={loading} />
+              <UploadForm form={form} setForm={setForm} onSubmit={handleEvaluate} onClear={clearAll} loading={loading} maxUploadMb={maxUploadMb} />
             </div>
             <div ref={resultRef} className="scroll-mt-4 lg:col-span-7 print-full">
               <div className="space-y-4">

@@ -20,7 +20,7 @@ function StepLabel({ n, children }) {
 /**
  * Controlled form: its values live in App, so switching tabs never loses them.
  */
-export default function UploadForm({ form, setForm, onSubmit, onClear, loading }) {
+export default function UploadForm({ form, setForm, onSubmit, onClear, loading, maxUploadMb = 4 }) {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const busy = uploading || loading;
@@ -28,13 +28,17 @@ export default function UploadForm({ form, setForm, onSubmit, onClear, loading }
 
   async function handleFile(file) {
     if (!file) return;
+    if (file.size > maxUploadMb * 1024 * 1024) {
+      setForm((f) => ({ ...f, uploadInfo: { type: 'error', text: `${file.name} is ${(file.size / 1048576).toFixed(1)} MB — the limit is ${maxUploadMb} MB. Try a smaller file, or paste the text below.` } }));
+      return;
+    }
     setUploading(true);
     setForm((f) => ({ ...f, uploadInfo: null }));
     try {
       const fd = new FormData();
       fd.append('file', file);
       const res = await fetch('/api/extract', { method: 'POST', body: fd });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: res.status === 413 ? `File too large for this server (limit ${maxUploadMb} MB).` : `Upload failed (HTTP ${res.status}).` }));
       if (!res.ok) throw new Error(data.error || 'Upload failed');
 
       const fl = data.fields || {};
@@ -126,7 +130,7 @@ export default function UploadForm({ form, setForm, onSubmit, onClear, loading }
             {uploading ? 'Reading document…' : form.fileName ? form.fileName : 'Upload proposal document'}
           </span>
           <span className="block text-xs text-slate-500 mt-0.5">
-            {form.fileName ? 'Click or drop to replace' : 'PDF, DOCX or TXT · max 10 MB'}
+            {form.fileName ? 'Click or drop to replace' : `PDF, DOCX or TXT · max ${maxUploadMb} MB`}
           </span>
         </span>
       </label>

@@ -5,8 +5,10 @@ const { parseDocument } = require('../services/documentParser');
 const { extractProposalFields } = require('../services/llmService');
 const { extractFieldsLocally } = require('../services/fieldExtractor');
 
-// Keep uploads in memory (nothing written to disk) and cap size at 10 MB
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+// Keep uploads in memory (nothing written to disk). Vercel caps request bodies at
+// 4.5 MB, so the limit is 4 MB there and 10 MB elsewhere (override with MAX_UPLOAD_MB).
+const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB) || (process.env.VERCEL ? 4 : 10);
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 } });
 
 // POST /api/extract  (multipart/form-data, field name: "file")
 // Reads the document, asks the LLM to pull out title / institution / budget / duration,
@@ -15,7 +17,7 @@ router.post('/extract', (req, res) => {
   upload.single('file')(req, res, async (uploadErr) => {
     if (uploadErr) {
       const tooBig = uploadErr.code === 'LIMIT_FILE_SIZE';
-      return res.status(tooBig ? 413 : 400).json({ error: tooBig ? 'File is larger than 10 MB' : uploadErr.message });
+      return res.status(tooBig ? 413 : 400).json({ error: tooBig ? `File is larger than ${MAX_UPLOAD_MB} MB` : uploadErr.message });
     }
 
     try {
@@ -59,3 +61,4 @@ router.post('/extract', (req, res) => {
 });
 
 module.exports = router;
+module.exports.MAX_UPLOAD_MB = MAX_UPLOAD_MB;

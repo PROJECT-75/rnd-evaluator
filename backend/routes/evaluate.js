@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/db');
+const store = require('../db/store');
 const { assessNovelty } = require('../services/llmService');
 const { checkFinancials } = require('../services/financialCheck');
 const { keywordNovelty } = require('../services/keywordSimilarity');
@@ -49,25 +49,21 @@ router.post('/evaluate', async (req, res) => {
     ).toFixed(1);
 
     // 4. Save to DB
-    const info = db.prepare(`
-      INSERT INTO proposals
-      (title, proposer, proposal_text, requested_budget, scope_summary, novelty_score, novelty_reasoning, financial_flag, financial_reasoning, overall_score)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    const id = store.insert({
       title,
-      proposer || 'Unknown',
-      proposalText,
-      requestedBudgetLakhs || null,
-      `${durationMonths || '?'} months`,
-      noveltySubScore,
-      novelty.reasoning,
-      financial.flag,
-      financial.reasoning,
-      overallScore
-    );
+      proposer: proposer || 'Unknown',
+      proposal_text: proposalText,
+      requested_budget: requestedBudgetLakhs || null,
+      scope_summary: `${durationMonths || '?'} months`,
+      novelty_score: noveltySubScore,
+      novelty_reasoning: novelty.reasoning,
+      financial_flag: financial.flag,
+      financial_reasoning: financial.reasoning,
+      overall_score: Number(overallScore)
+    });
 
     res.json({
-      id: info.lastInsertRowid,
+      id,
       title,
       novelty,
       financial,

@@ -11,7 +11,7 @@ explainable score to help reviewers prioritize funding:
    (no LLM), so every flag can be explained exactly.
 
 ## Features
-- **Upload a proposal** (PDF, DOCX, TXT, ≤10 MB) → text extracted, and title,
+- **Upload a proposal** (PDF, DOCX, TXT; ≤10 MB locally/Render, ≤4 MB on Vercel) → text extracted, and title,
   institution, budget (converted to ₹ lakhs) and duration (months) auto-filled
   by Gemini for the reviewer to verify
 - Or paste text / fill the form manually
@@ -75,6 +75,21 @@ Open **http://localhost:5173**. Restart the backend after editing `.env`.
 cd frontend && npm run build && cd ..
 npm start                   # everything on http://localhost:3000
 ```
+
+## Deploy (Vercel)
+This repo includes `vercel.json`: the React app is served as static files from Vercel's CDN and
+the Express API runs as one serverless function (`api/index.js` → `backend/app.js`).
+
+1. Push this folder to GitHub (`.gitignore` keeps `.env`, `node_modules` and the database out).
+2. On [vercel.com/new](https://vercel.com/new) → **Import** the repo. Leave the settings as detected
+   (vercel.json sets install/build/output).
+3. Under **Environment Variables** add `GEMINI_API_KEY` (optionally `GEMINI_MODEL=gemini-3.5-flash-lite`
+   and `GEMINI_FALLBACK_MODELS=gemini-3.6-flash,gemini-3.8-flash`).
+4. **Deploy** → live at `https://<project>.vercel.app`.
+
+**Vercel notes:** uploads are limited to 4 MB (Vercel's 4.5 MB request cap). Saved evaluations live in
+`/tmp` (or in memory if SQLite can't load) and reset when the function restarts — fine for demos; use a
+hosted database for production. `GET /api/health` shows which storage is active.
 
 ## Deploy (Render, free tier)
 This repo includes `render.yaml`, so Render can set everything up from GitHub.
