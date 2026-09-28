@@ -1,0 +1,23 @@
+{
+  "name": "rnd-proposal-evaluator-backend",
+  "version": "1.0.0",
+  "description": "AI/ML based Auto Evaluation of R&D Proposals - PS 25180 (Ministry of Coal, NaCCER) - Backend API",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "build": "npm install --prefix frontend --include=dev && npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "multer": "^2.0.0",
+    "pdf-parse": "^2.4.5",
+    "mammoth": "^1.13.0"
+  },
+  "engines": {
+    "node": ">=20.16.0"
+  }
+}
